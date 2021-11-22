@@ -1,4 +1,8 @@
-from typing import List, Iterable
+import operator
+from functools import reduce
+from typing import List, Iterable, Any
+
+from utils.generic_utils import T
 
 
 def combinations_sum(number_of_values: int, desired_sum: int) -> Iterable[List[int]]:
@@ -15,3 +19,6 @@ def combinations_sum(number_of_values: int, desired_sum: int) -> Iterable[List[i
                 combination.append(number)
                 yield combination
 
+
+def product(values: Iterable[T]) -> T:
+    return reduce(operator.mul, values, 1)

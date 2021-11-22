@@ -22,7 +22,7 @@ def normalize(poly: Expr) -> Expr:
 def gen_basis(symbols: List[Symbol], basis_size: int, num_inner_squares: int) -> Iterable[Expr]:
     for _ in range(basis_size):
         basis_before_normalization = sum(gen_base_poly(symbols) for _ in range(num_inner_squares))
-        print('-' * 10)
+        print('-' * 40)
         print('Before Normalization:')
         print(f'\t{basis_before_normalization}')
         basis_after_normalization = normalize(basis_before_normalization)
@@ -33,12 +33,18 @@ def gen_basis(symbols: List[Symbol], basis_size: int, num_inner_squares: int) ->
         yield basis_after_normalization
 
 
+def calc_quality_measure(base_polys, another_poly):
+    pass
+
+
 def main():
     x = Symbol('x')
     y = Symbol('y')
     z = Symbol('z')
-    w = Symbol('w')
-    base_polys = list(gen_basis([x, y, z, w], basis_size=5, num_inner_squares=2))
+    symbols = [x, y, z]
+    first_base, *base_polys = list(gen_basis(symbols, basis_size=4, num_inner_squares=2))
+    print('#' * 40)
+    print('#' * 40)
 
 
 if __name__ == '__main__':

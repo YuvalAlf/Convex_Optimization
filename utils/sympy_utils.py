@@ -1,6 +1,8 @@
 import re
-from typing import Any
-from sympy import Symbol
+from typing import Any, List
+
+from sympy import Expr, Poly
+
 from utils.core_utils import is_float
 
 
@@ -15,3 +17,11 @@ def eval_sympy_str(string: str) -> Any:
     for variable in unique_variables:
         exec(f"{variable} = Symbol('{variable}')")
     return eval(string)
+
+
+def sum_expr(expressions: List[Expr]) -> Poly:
+    total = 0
+    for expr in expressions:
+        total = total + expr
+    return total.as_poly()
+

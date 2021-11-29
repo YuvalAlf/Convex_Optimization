@@ -65,7 +65,7 @@ class PolyBasis:
         linear_multipliers = cp.Variable(len(self.polys))
         error_poly = cp.Variable(self.poly_len)
         objective = cp.Minimize(cp.sum_squares(error_poly))
-        constraints = []
+        constraints = [multiplier >= 0 for multiplier in linear_multipliers]
         all_monomials = []
         for error, (monomial, coefficients) in zip(error_poly, self.poly_combinations()):
             all_monomials.append(monomial)
@@ -77,8 +77,3 @@ class PolyBasis:
         result_error_poly = sum(coefficient * monom for coefficient, monom in zip(error_poly.value, all_monomials))
         multipliers = list(zip(linear_multipliers.value, self.polys))
         return multipliers, result_error_poly, result
-
-
-        cp.constraints()
-
-

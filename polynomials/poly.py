@@ -8,6 +8,7 @@ from utils.math_utils import combinations_sum
 
 Monomial = Expr
 
+
 def all_symbols(poly: Poly) -> Set[Symbol]:
     if isinstance(poly, Symbol):
         return {poly}

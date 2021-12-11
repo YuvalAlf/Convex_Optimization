@@ -1,7 +1,7 @@
 from picos import SolutionFailure
 from sympy import Poly
 
-from polynomials.poly import all_symbols, poly_to_str
+from sympy_utils.sympy_utils import all_symbols, poly_to_str
 from sos_tools.SumOfSquares import SOSProblem
 from utils.printing_utils import TabPrinter
 

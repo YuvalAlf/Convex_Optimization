@@ -17,7 +17,7 @@ def main():
     plt.xlabel('# Polys in Sum')
     plt.ylabel('Error [Log]')
     plt.yscale('log')
-    plt.legend(title='# Polys in Basis')
+    plt.legend(title='# Polys in Basis', loc='upper left', bbox_to_anchor=(1.0, 1.0))
     plt.savefig('figure.png', dpi=300, bbox_inches='tight')
     os.system('figure.png')
 

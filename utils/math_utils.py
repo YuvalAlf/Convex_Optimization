@@ -20,5 +20,5 @@ def combinations_sum(number_of_values: int, desired_sum: int) -> Iterable[List[i
                 yield combination
 
 
-def product(values: Iterable[T]) -> T:
+def math_product(values: Iterable[T]) -> T:
     return reduce(operator.mul, values, 1)

@@ -4,6 +4,7 @@ from typing import List, Iterable, Set
 import numpy as np
 from sympy import Symbol, Poly, Expr
 
+from cvxpy_utils.cvxpy_utils import cvxpy_mul_expr
 from utils.math_utils import combinations_sum
 
 Monomial = Expr
@@ -30,7 +31,8 @@ def gen_normalized_poly(variables: List[Symbol], deg: int, random: Random) -> Po
     for current_deg in range(deg + 1):
         for exponents in combinations_sum(number_of_values=len(variables), desired_sum=current_deg):
             coefficient = random.uniform(-1, 1)
-            poly = poly + coefficient * sum(variable**exponent for exponent, variable in zip(exponents, variables))
+            monomial = cvxpy_mul_expr([variable**exponent for variable, exponent in zip(variables, exponents)])
+            poly = poly + coefficient * monomial
     return normalize(poly)
 
 

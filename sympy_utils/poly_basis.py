@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
-from itertools import chain
+from itertools import chain, islice
 from random import Random
 from symtable import Symbol
 from typing import List, Tuple, Iterable, Dict
@@ -14,7 +14,8 @@ from scipy.stats import ortho_group
 from sympy import Poly, symbols
 
 from cvxpy_utils.cvxpy_utils import cvxpy_sum_product
-from sympy_utils.sympy_utils import gen_normalized_poly, normalize, poly_to_str, Monomial, all_coefficients
+from sympy_utils.sympy_utils import gen_normalized_poly, normalize, poly_to_str, Monomial, all_coefficients, \
+    gen_poly_with_coeffs
 from utils import math_utils
 from utils.iterable_utils import enumerate1
 from utils.math_utils import combinations_sum
@@ -56,15 +57,18 @@ class PolyBasis:
         polys = [gen_normalized_poly(variables, max_deg, random) for _ in range(num_polys)]
         return PolyBasis(variables, polys)
 
-
     @staticmethod
     def gen_orthonormal_random_basis(num_variables: int, base_polys: int, max_deg: int, random: Random):
         variables = symbols(f'x1:{num_variables+1}')
         poly = gen_normalized_poly(variables, max_deg, random)
-        num_coeffs = len(all_coefficients(poly))
-        matrix = ortho_group.rvs(dim=num_coeffs, random_state=random.randint(0, 100000))
-        raise RuntimeError()
-
+        num_coeffs = ilen(all_coefficients(poly.expr))
+        orthonormal_matrix = ortho_group.rvs(dim=num_coeffs, random_state=random.randint(0, 2**32 - 1))
+        basis_polys = []
+        if base_polys > len(orthonormal_matrix):
+            raise ValueError(f'Poly length is {num_coeffs} but {base_polys} orthonormal polys are requested')
+        for coefficients in islice(orthonormal_matrix, base_polys):
+            basis_polys.append(gen_poly_with_coeffs(variables, max_deg, coefficients))
+        return PolyBasis(variables, basis_polys)
 
     def square(self) -> PolyBasis:
         return PolyBasis(self.variables, [normalize(poly*poly) for poly in self.polys])

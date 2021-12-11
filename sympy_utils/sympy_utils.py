@@ -36,5 +36,14 @@ def gen_normalized_poly(variables: List[Symbol], deg: int, random: Random) -> Po
     return normalize(poly)
 
 
+def gen_poly_with_coeffs(variables: List[Symbol], deg: int, coeffs: List[int]) -> Poly:
+    poly = 0
+    for current_deg in range(deg + 1):
+        for coef, exponents in zip(coeffs, combinations_sum(number_of_values=len(variables), desired_sum=current_deg)):
+            monomial = cvxpy_mul_expr([variable**exponent for variable, exponent in zip(variables, exponents)])
+            poly = poly + coef * monomial
+    return poly.as_poly()
+
+
 def poly_to_str(poly: Poly) -> str:
     return str(poly.as_expr()).replace('**', '^')

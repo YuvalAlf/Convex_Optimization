@@ -41,10 +41,6 @@ class Poly:
             return f'*{monom}' if monom.degree > 0 else ''
         return ' + '.join((f'{self[monom]:.5f}{mul_monom(monom)}' for monom in monoms_sorted))
 
-    @cache
-    def __hash__(self) -> int:
-        return hash(self.monom_to_coeff)
-
     def normalize(self):
         sum_squared_coeffs = sum((coeff**2 for coeff in self.monom_to_coeff.values()))
         normalization_factor = sqrt(sum_squared_coeffs)
@@ -57,6 +53,3 @@ class Poly:
             for monom in Monom.all_monoms_in_deg(symbols, monom_deg):
                 monom_to_coeff[monom] = prng.uniform(-1, 1)
         return Poly(monom_to_coeff)
-
-p = Poly.gen_random(['a', 'b'], 2, Random())
-print((p * p).normalize())

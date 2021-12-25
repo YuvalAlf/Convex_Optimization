@@ -29,9 +29,12 @@ class Monom:
             return f'{symbol}' if deg == 1 else f'{symbol}^{deg}'
         return ''.join(starmap(to_str, self.symbol_to_deg.items()))
 
-    # @cache
-    def __hash__(self) -> int:
+    @cached_property
+    def hash_value(self):
         return hash(tuple(chain(self.symbol_to_deg.items())))
+
+    def __hash__(self) -> int:
+        return self.hash_value
 
     @staticmethod
     def all_monoms_in_deg(symbols: List[str], deg: int) -> Iterable['Monom']:

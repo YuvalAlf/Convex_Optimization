@@ -9,3 +9,14 @@ def map_list(func: Callable[[T], V], items: Iterable[T]) -> List[V]:
 
 def enumerate1(items: Iterable[T]) -> Iterable[Tuple[int, T]]:
     return enumerate(items, 1)
+
+
+def generate(times: int, generator: Callable[[], T]) -> Iterable[T]:
+    for _ in range(times):
+        yield generator()
+
+
+def filter_by(by: Callable[[T], V], predicate: Callable[[V], bool], items: Iterable[T]) -> Iterable[T]:
+    for item in items:
+        if predicate(by(item)):
+            yield item

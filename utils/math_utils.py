@@ -15,7 +15,6 @@ def combinations_sum(number_of_values: int, desired_sum: int) -> Iterable[List[i
     else:
         for number in range(desired_sum + 1):
             for combination in combinations_sum(number_of_values - 1, desired_sum - number):
-                combination = combination.copy()
                 combination.append(number)
                 yield combination
 

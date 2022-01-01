@@ -18,11 +18,6 @@ class Plot:
         plt.figure(figsize=self.fig_size)
         return self
 
-    def plot_function(self, func):
-        xs = self.x_lim
-        ys = map_list(func, xs)
-        plt.plot(xs, ys, '-')
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         plt.xlim(self.x_lim)
         plt.xlim(self.y_lim)

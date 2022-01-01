@@ -50,7 +50,7 @@ class Poly:
         return Poly(dict(monoms_to_coeffs))
 
     def __str__(self) -> str:
-        monoms_sorted = sorted(self.monoms, key=lambda monom: (monom.degree, sorted(monom.symbols())))
+        monoms_sorted = sorted(self.monoms, key=lambda monom: (monom.degree, sorted(monom.variables)))
 
         def mul_monom_str(monom: Monom) -> str:
             return f'*{monom}' if monom.degree > 0 else ''
@@ -65,10 +65,10 @@ class Poly:
         return self * self
 
     @staticmethod
-    def gen_random(symbols: List[str], deg: int, prng: Random) -> Poly:
+    def gen_random(variables: List[str], deg: int, prng: Random) -> Poly:
         monom_to_coeff = dict()
         for monom_deg in range(deg + 1):
-            for monom in Monom.all_monoms_in_deg(symbols, monom_deg):
+            for monom in Monom.all_monoms_in_deg(variables, monom_deg):
                 monom_to_coeff[monom] = prng.uniform(-1, 1)
         return Poly(monom_to_coeff)
 
@@ -97,3 +97,19 @@ class Poly:
         except RuntimeError as e:
             print(f'Convex Optimization Error: {e}', file=sys.stderr)
             return 0, 0, 0
+
+    @staticmethod
+    def calc_approximation_error(num_vars: int, base_polys: int, max_deg: int, sum_polys: int, prng: Random) -> float:
+        half_deg = max_deg // 2
+        variables = [f'x{num}' for num in range(1, num_vars + 1)]
+        positive_basis = [Poly.gen_random(variables, half_deg, prng).square().normalize() for _ in range(base_polys)]
+        polys_in_sum = [Poly.gen_random(variables, half_deg, prng).square().normalize() for _ in range(sum_polys)]
+        sum_poly = sum(polys_in_sum, Poly.zero()).normalize()
+        linear_combination, error, error_value = Poly.convex_approximation(variables, max_deg, positive_basis, sum_poly)
+
+        for combination, pol in linear_combination:
+            print(f'{combination} * ({pol}) +')
+        print(f'  + {error}')
+        print(f'   = {sum_poly}')
+
+        return error_value

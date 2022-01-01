@@ -1,6 +1,6 @@
 import operator
 from functools import reduce
-from typing import List, Iterable, Any
+from typing import List, Iterable
 
 from utils.generic_utils import T
 

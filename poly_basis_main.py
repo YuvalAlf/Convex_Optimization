@@ -22,10 +22,10 @@ def calc_error(num_variables: int, base_polys: int, max_deg: int, sum_polys: int
     sum_poly = sum(generate(sum_polys, lambda: Poly.gen_random(variables, half_deg, random).square().normalize()),
                    Poly.zero()).normalize()
     linear_combination, error, error_value = Poly.convex_approximation(variables, max_deg, positive_basis, sum_poly)
-    # for combination, pol in linear_combination:
-    #     print(f'{combination} * ({pol}) +')
-    # print(f'  + {error}')
-    # print(f'   = {sum_poly}')
+    for combination, pol in linear_combination:
+        print(f'{combination} * ({pol}) +')
+    print(f'  + {error}')
+    print(f'   = {sum_poly}')
     return error_value
 
 
@@ -56,10 +56,10 @@ def calc_error_danny_alg(num_variables: int, max_base_poly: int, max_deg: int, s
 def main():
     random = Random(2)
     num_variables_options = [2]
-    base_polys_options = list(range(1, 201))
-    max_degs_options = [4]
+    base_polys_options = [3]  #[int(1.3**i) for i in range(30, 40)]
+    max_degs_options = [2]
     sum_polys_options = [1]
-    times = list(range(10))
+    times = list(range(1))
     all_options = product(num_variables_options, base_polys_options, max_degs_options, sum_polys_options, times)
     print(f'{time_entry},{num_variables_entry},{base_num_polys},{max_deg_entry},{sum_num_polys_entry},{error_entry}')
     for num_variables, base_polys, double_max_deg, sum_polys, time in all_options:
@@ -70,8 +70,8 @@ def main():
 def main_danny():
     random = Random(2)
     num_variables_options = [2]
-    base_polys_options = list(range(1, 201)) #[int(1.5**i) for i in range(20)]
-    max_degs_options = [4]
+    base_polys_options = [int(1.3**i) for i in range(30)]
+    max_degs_options = [2]
     sum_polys_options = [1]
     times = list(range(10))
     all_options = product(num_variables_options, base_polys_options, max_degs_options, sum_polys_options, times)

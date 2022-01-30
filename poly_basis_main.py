@@ -1,8 +1,8 @@
-from itertools import product
 from random import Random
 
-from symbolic_poly.poly_base import PolyBase
+from symbolic_poly.base_creation import BaseCreation
 from utils.csv_writer import CsvWriter
+from utils.input_utils import get_input
 
 time_entry = 'time'
 num_variables_entry = 'num_variables'
@@ -12,21 +12,19 @@ sum_num_polys_entry = 'sum_num_polys'
 error_entry = 'error'
 
 
+def run_main(base_creation: BaseCreation, output_csv_path: str, prng: Random) -> None:
+    with CsvWriter(output_csv_path, ['Basis Size', 'Error']) as csv_writer:
+        for basis in base_creation.create_base(prng):
+            error = basis.calc_error(base_creation.variables, base_creation.degree, prng)
+            print(f'|Basis| = {len(basis.polys)}  ---> error = {error:0.5f}')
+            csv_writer.write_line(len(basis.polys), error)
+
+
 def main() -> None:
     prng = Random(2)
-    num_variables_options = [2]
-    base_polys_options = [1, 10, 50, 100, 200, 500, 1000, 2000]
-    max_degs_options = [6]
-    sum_polys_options = [1, 5, 10, 50, 100]
-    times = list(range(10))
-    all_options = product(num_variables_options, base_polys_options, max_degs_options, sum_polys_options, times)
-    headers = [time_entry, num_variables_entry, base_num_polys, max_deg_entry, sum_num_polys_entry, error_entry]
-    with CsvWriter('results/random.csv', headers) as csv_writer:
-        for num_variables, base_polys, double_max_deg, sum_polys, time in all_options:
-            error = PolyBase.calc_approximation_error(num_variables, base_polys, double_max_deg, sum_polys, prng)
-            print(f'Error = {error}')
-            if error is not None:
-                csv_writer.write_line(time, num_variables, base_polys, double_max_deg, sum_polys, error)
+    output_csv_path = get_input('Enter output CSV path', str, 'results.csv')
+    base_creation = BaseCreation.get_base_creation_from_user()
+    run_main(base_creation, output_csv_path, prng)
 
 
 if __name__ == '__main__':

@@ -9,7 +9,6 @@ import cvxpy as cp
 from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
-from utils.functional_utils import on_error_return
 from utils.math_utils import combinations_sum
 
 
@@ -43,6 +42,10 @@ class PolyBase:
         problem = cp.Problem(objective, constraints)
         result = problem.solve()
         return result
+
+    def calc_error(self, variables: List[str], max_deg: int, prng: Random) -> float:
+        poly = Poly.gen_random(variables, max_deg // 2, prng).square().normalize()
+        return self.convex_approximation(variables, max_deg, poly)
 
     @staticmethod
     def calc_approximation_error(num_vars: int, base_polys: int, max_deg: int, sum_polys: int, prng: Random) \

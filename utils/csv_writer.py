@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from typing import Any
+from typing import List, TextIO, Any
 
 
 @dataclass
 class CsvWriter:
     path: str
-    header: List[Any]
+    header: List[str]
     separator: str = ','
 
     def __enter__(self) -> OpenedCsvWriter:
@@ -22,7 +22,7 @@ class CsvWriter:
 
 @dataclass
 class OpenedCsvWriter:
-    def __init__(self, file: TextIO, header: List[Any], separator: str) -> None:
+    def __init__(self, file: TextIO, header: List[str], separator: str) -> None:
         self.file = file
         self.header = header
         self.separator = separator

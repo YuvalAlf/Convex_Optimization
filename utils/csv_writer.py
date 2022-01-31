@@ -33,6 +33,7 @@ class OpenedCsvWriter:
             f"CSV Header has {len(self.header)} entries, but {len(values)} are given"
         self.file.write(self.separator.join(map(str, values)))
         self.file.write('\n')
+        self.file.flush()
 
     def close(self) -> None:
         self.file.close()

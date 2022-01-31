@@ -62,7 +62,7 @@ class IncrementalBaseCreation(BaseCreation):
     sample_polys: int
 
     def calc_median_error(self, poly_base: PolyBase, prng: Random) -> float:
-        errors = [poly_base.calc_error(self.variables, self.degree, prng) for _ in range(self.sample_polys)]
+        errors = [poly_base.calc_error(self.variables, self.degree, prng) for _ in range(self.validation_polys)]
         return median(errors)
 
     def create_base(self, prng: Random) -> Iterable[PolyBase]:

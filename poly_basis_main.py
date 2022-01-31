@@ -15,9 +15,10 @@ error_entry = 'error'
 def run_main(base_creation: BaseCreation, output_csv_path: str, prng: Random) -> None:
     with CsvWriter(output_csv_path, ['Basis Size', 'Error']) as csv_writer:
         for basis in base_creation.create_base(prng):
-            error = basis.calc_error(base_creation.variables, base_creation.degree, prng)
-            print(f'|Basis| = {len(basis.polys)}  ---> error = {error:0.5f}')
-            csv_writer.write_line(len(basis.polys), error)
+            for _ in range(10):
+                error = basis.calc_error(base_creation.variables, base_creation.degree, prng)
+                print(f'|Basis| = {len(basis.polys)}  ---> error = {error:0.5f}')
+                csv_writer.write_line(len(basis.polys), error)
 
 
 def main() -> None:

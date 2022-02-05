@@ -34,7 +34,7 @@ class BaseCreation(ABC):
         basis_size = get_input('Enter basis size', int, 10)
         num_variables = get_input('Enter number of variables', int, 2)
         degree = get_input('Enter basis degree', int, 6)
-        mode = get_input('Enter R for random basis and I for incremental basis', str, 'I')
+        mode = get_input('Enter R for random basis and I for incremental basis', str, 'R')
         if mode == 'R':
             return RandomBaseCreation(basis_size, num_variables, degree)
         if mode == 'I':

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from random import Random
 from typing import List, Optional
 
@@ -9,11 +10,13 @@ import cvxpy as cp
 from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
+from utils.encoding_utils import EncodeableJson
 from utils.math_utils import combinations_sum
 
 
+@dataclass_json
 @dataclass
-class PolyBase:
+class PolyBase(EncodeableJson):
     polys: List[Poly]
 
     @staticmethod
@@ -28,7 +31,7 @@ class PolyBase:
         linear_multipliers = cp.Variable(len(self.polys))
         constraints = [multiplier >= 0 for multiplier in linear_multipliers]
 
-        monoms = [Monom(dict(zip(variables, exponents))) for deg in range(max_deg + 1)
+        monoms = [Monom.create(dict(zip(variables, exponents))) for deg in range(max_deg + 1)
                   for exponents in combinations_sum(number_of_values=len(variables), desired_sum=deg)]
 
         sum_squares_error = cp.Constant(0.0)
@@ -57,4 +60,5 @@ class PolyBase:
         poly_basis = PolyBase.gen_random(variables, half_deg, base_polys, prng).normalize_square()
         return poly_basis.convex_approximation(variables, max_deg, sum_poly)
 
-
+    def encode_text(self) -> str:
+        return '\n'.join((poly.encode_text() for poly in self.polys))

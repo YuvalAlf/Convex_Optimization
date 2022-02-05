@@ -64,3 +64,6 @@ class Poly:
             for monom in Monom.all_monoms_in_deg(variables, monom_deg):
                 monom_to_coeff[monom] = prng.uniform(-1, 1)
         return Poly(monom_to_coeff)
+
+    def encode_text(self):
+        return self.__str__()

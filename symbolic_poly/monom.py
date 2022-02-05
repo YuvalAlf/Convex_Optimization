@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import cached_property
 from itertools import chain, starmap
 from typing import Dict, List, Iterable
@@ -7,9 +8,13 @@ from typing import Dict, List, Iterable
 from utils.math_utils import combinations_sum
 
 
+@dataclass(frozen=True)
 class Monom:
-    def __init__(self, variable_to_deg: Dict[str, int]) -> None:
-        self.variable_to_deg = {var: deg for var, deg in variable_to_deg.items() if deg > 0}
+    variable_to_deg: Dict[str, int]
+
+    @staticmethod
+    def create(variable_to_deg: Dict[str, int]) -> Monom:
+        return Monom({var: deg for var, deg in variable_to_deg.items() if deg > 0})
 
     def __getitem__(self, item: str) -> int:
         return self.variable_to_deg.get(item, 0)
@@ -23,7 +28,8 @@ class Monom:
         return sum(self.variable_to_deg.values())
 
     def __mul__(self, other: Monom) -> Monom:
-        return Monom({variable: self[variable] + other[variable] for variable in set(chain(self.variables, other.variables))})
+        return Monom.create({variable: self[variable] + other[variable]
+                             for variable in set(chain(self.variables, other.variables))})
 
     def __str__(self) -> str:
         def to_str(variable: str, deg: int) -> str:

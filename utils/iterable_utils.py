@@ -1,6 +1,6 @@
 from typing import Callable, Iterable, List, Tuple
 
-from utils.generic_utils import V, T
+from utils.generic_utils import V, T, K
 
 
 def map_list(func: Callable[[T], V], items: Iterable[T]) -> List[V]:
@@ -20,3 +20,7 @@ def filter_by(by: Callable[[T], V], predicate: Callable[[V], bool], items: Itera
     for item in items:
         if predicate(by(item)):
             yield item
+
+
+def min_by(by: Callable[[T], K], items: Iterable[T], map_func: Callable[[T], V]) -> V:
+    return map_func(min(items, key=by))

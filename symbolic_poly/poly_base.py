@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from dataclasses_json import dataclass_json
+from functools import cached_property
 from random import Random
+from statistics import median
 from typing import List, Optional
 
 import cvxpy as cp
@@ -10,14 +11,16 @@ import cvxpy as cp
 from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
-from utils.encoding_utils import EncodeableJson
 from utils.math_utils import combinations_sum
 
 
-@dataclass_json
 @dataclass
-class PolyBase(EncodeableJson):
+class PolyBase:
     polys: List[Poly]
+
+    @cached_property
+    def degree(self):
+        return max((poly.degree for poly in self.polys))
 
     @staticmethod
     def gen_random(variables: List[str], deg: int, num_polys: int, prng: Random) -> PolyBase:
@@ -51,6 +54,11 @@ class PolyBase(EncodeableJson):
         return self.convex_approximation(variables, max_deg, poly)
 
     @staticmethod
+    def calc_median_error(poly_base: PolyBase, validation_polys: List[Poly], variables: List[str]) -> float:
+        errors = [poly_base.convex_approximation(variables, poly_base.degree, poly) for poly in validation_polys]
+        return median(errors)
+
+    @staticmethod
     def calc_approximation_error(num_vars: int, base_polys: int, max_deg: int, sum_polys: int, prng: Random) \
             -> Optional[float]:
         half_deg = max_deg // 2
@@ -62,3 +70,7 @@ class PolyBase(EncodeableJson):
 
     def encode_text(self) -> str:
         return '\n'.join((poly.encode_text() for poly in self.polys))
+
+    @staticmethod
+    def decode_text(path: str) -> Poly:
+        raise NotImplementedError('Need to implement this')

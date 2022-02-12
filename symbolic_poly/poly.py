@@ -15,6 +15,10 @@ from symbolic_poly.monom import Monom
 class Poly:
     monom_to_coeff: Dict[Monom, float]
 
+    @cached_property
+    def degree(self):
+        return max((monom.degree for monom, coeff in self.monom_to_coeff.items() if coeff != 0.0))
+
     @staticmethod
     def zero() -> Poly:
         return Poly(dict())
@@ -64,6 +68,10 @@ class Poly:
             for monom in Monom.all_monoms_in_deg(variables, monom_deg):
                 monom_to_coeff[monom] = prng.uniform(-1, 1)
         return Poly(monom_to_coeff)
+
+    @staticmethod
+    def gen_random_positive(variables: List[str], half_degree: int, prng: Random) -> Poly:
+        return Poly.gen_random(variables, half_degree, prng).square().normalize()
 
     def encode_text(self):
         return self.__str__()

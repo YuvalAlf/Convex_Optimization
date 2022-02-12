@@ -11,9 +11,9 @@ def is_float(value: str) -> bool:
         return False
 
 
-def fst(array: Tuple[T, ...]) -> T:
+def fst(array: Any) -> Any:
     return array[0]
 
 
-def snd(array: Tuple[Any, T, ...]) -> T:
+def snd(array: Any) -> Any:
     return array[1]

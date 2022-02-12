@@ -37,7 +37,7 @@ class Monom:
             if deg == 1:
                 return f'{variable}'
             return f'{variable}^{deg}'
-        return ''.join(starmap(to_str, self.variable_to_deg.items()))
+        return '*'.join(starmap(to_str, self.variable_to_deg.items()))
 
     @cached_property
     def hash_value(self) -> int:

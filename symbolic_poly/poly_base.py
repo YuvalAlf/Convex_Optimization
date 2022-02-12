@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import cached_property
 from random import Random
-from statistics import median
+from statistics import median, mean
 from typing import List, Optional
 
 import cvxpy as cp
@@ -21,7 +21,7 @@ class PolyBase:
 
     @cached_property
     def variables(self):
-        return list({variable for poly in self.polys for variable in poly.variables})
+        return sorted(list({variable for poly in self.polys for variable in poly.variables}))
 
     @cached_property
     def degree(self):
@@ -34,7 +34,6 @@ class PolyBase:
     def normalize_square(self) -> PolyBase:
         return PolyBase([poly.square().normalize() for poly in self.polys])
 
-    # @on_error_return(None)
     def convex_approximation(self, variables: List[str], max_deg: int, poly: Poly) -> float:
         linear_multipliers = cp.Variable(len(self.polys))
         constraints = [multiplier >= 0 for multiplier in linear_multipliers]
@@ -59,9 +58,9 @@ class PolyBase:
         return self.convex_approximation(variables, max_deg, poly)
 
     @staticmethod
-    def calc_median_error(poly_base: PolyBase, validation_polys: List[Poly], variables: List[str]) -> float:
+    def calc_average_error(poly_base: PolyBase, validation_polys: List[Poly], variables: List[str]) -> float:
         errors = [poly_base.convex_approximation(variables, poly_base.degree, poly) for poly in validation_polys]
-        return median(errors)
+        return mean(errors)
 
     @staticmethod
     def calc_approximation_error(num_vars: int, base_polys: int, max_deg: int, sum_polys: int, prng: Random) \

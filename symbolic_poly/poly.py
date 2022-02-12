@@ -9,6 +9,7 @@ from random import Random
 from typing import List, Dict
 
 from symbolic_poly.monom import Monom
+from utils.iterable_utils import generate
 
 
 @dataclass(frozen=True)
@@ -21,7 +22,7 @@ class Poly:
 
     @cached_property
     def variables(self) -> List[str]:
-        return list({variable for monom in self.monom_to_coeff.keys() for variable in monom.variables})
+        return sorted(list({variable for monom in self.monom_to_coeff.keys() for variable in monom.variables}))
 
     @staticmethod
     def zero() -> Poly:
@@ -76,6 +77,10 @@ class Poly:
     @staticmethod
     def gen_random_positive(variables: List[str], half_degree: int, prng: Random) -> Poly:
         return Poly.gen_random(variables, half_degree, prng).square().normalize()
+
+    @staticmethod
+    def gen_random_positive_polys(num_polys: int, variables: List[str], half_degree: int, prng: Random) -> List[Poly]:
+        return list(generate(num_polys, lambda: Poly.gen_random_positive(variables, half_degree, prng)))
 
     def encode_text(self):
         return self.__str__()

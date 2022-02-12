@@ -5,6 +5,8 @@ from functools import cached_property
 from itertools import chain, starmap
 from typing import Dict, List, Iterable
 
+from functools import lru_cache
+
 from utils.math_utils import combinations_sum
 
 
@@ -21,7 +23,7 @@ class Monom:
 
     @cached_property
     def variables(self) -> List[str]:
-        return list(self.variable_to_deg.keys())
+        return sorted(list(self.variable_to_deg.keys()))
 
     @cached_property
     def degree(self) -> int:
@@ -48,7 +50,6 @@ class Monom:
             return variable, int(deg)
         return Monom(dict(map(parse_entry, variables_to_degs)))
 
-    @cached_property
     def hash_value(self) -> int:
         return hash(tuple(sorted(self.variable_to_deg.items())))
 
@@ -56,7 +57,7 @@ class Monom:
         return self.variable_to_deg.__eq__(other.variable_to_deg)
 
     def __hash__(self) -> int:
-        return self.hash_value
+        return self.hash_value()
 
     @staticmethod
     def all_monoms_in_deg(variables: List[str], deg: int) -> Iterable[Monom]:

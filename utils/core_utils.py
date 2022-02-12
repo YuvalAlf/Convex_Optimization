@@ -17,3 +17,7 @@ def fst(array: Any) -> Any:
 
 def snd(array: Any) -> Any:
     return array[1]
+
+
+def id_func(value: T) -> T:
+    return value

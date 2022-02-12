@@ -5,18 +5,16 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from itertools import product
 from random import Random
-from statistics import median
+from statistics import mean
 from tempfile import TemporaryDirectory
-from typing import List, Iterable
+from typing import List
 
 from symbolic_poly.poly import Poly
 from symbolic_poly.poly_base import PolyBase
-from utils.core_utils import fst, snd
 from utils.input_utils import get_input
-from utils.iterable_utils import generate, min_by
-from utils.os_utils import decode_json, encode_json
+from utils.iterable_utils import min_arg_min
+from utils.os_utils import encode_pickle, decode_pickle
 
 
 @dataclass
@@ -41,8 +39,8 @@ class BaseCreation(ABC):
     def get_base_creation_from_user() -> BaseCreation:
         basis_size = get_input('Enter basis size', int, 10)
         num_variables = get_input('Enter number of variables', int, 2)
-        degree = get_input('Enter basis degree', int, 6)
-        mode = get_input('Enter R for random basis and I for incremental basis', str, 'R')
+        degree = get_input('Enter basis degree', int, 4)
+        mode = get_input('Enter R for random basis and I for incremental basis', str, 'I')
         if mode == 'R':
             return RandomBaseCreation(basis_size, num_variables, degree)
         if mode == 'I':
@@ -69,36 +67,45 @@ class IncrementalBaseCreation(BaseCreation):
     sample_polys: int
     number_of_processors: int
 
-    @cached_property
-    def process_pool(self) -> multiprocessing.Pool:
-        return multiprocessing.Pool(processes=self.number_of_processors)
+    @staticmethod
+    def run_basis_validation(candidate_index: int, validation_polys_path: str, candidates_polys_path: str,
+                             current_polys_path: str) -> float:
+        validation_polys = decode_pickle(validation_polys_path)
+        candidates_polys = decode_pickle(candidates_polys_path)
+        current_polys = decode_pickle(current_polys_path)
+        candidate_poly = candidates_polys[candidate_index]
+        candidate_basis = PolyBase(current_polys + [candidate_poly])
+        errors = [candidate_basis.convex_approximation(candidate_basis.variables, candidate_basis.degree, validation_poly)
+                  for validation_poly in validation_polys]
+        return mean(errors)
 
     @staticmethod
-    def async_median_error(candidates_base_path: str, validation_polys_path: str, variables_path: str) -> float:
-        candidates_base = decode_json(candidates_base_path)
-        validation_polys = decode_json(validation_polys_path)
-        variables = decode_json(variables_path)
-        return PolyBase.calc_median_error(candidates_base, validation_polys, variables)
+    def async_best_poly(validation_polys: List[Poly], candidates_polys: List[Poly], current_polys: List[Poly],
+                        pool: multiprocessing.Pool) -> (Poly, float):
+        with TemporaryDirectory() as temp_dir:
+            validation_polys_path = encode_pickle(os.path.join(temp_dir, 'validation_polys.pickle'), validation_polys)
+            candidates_polys_path = encode_pickle(os.path.join(temp_dir, 'candidates_polys.pickle'), candidates_polys)
+            current_polys_path = encode_pickle(os.path.join(temp_dir, 'current_polys.pickle'), current_polys)
+            parameters = [[index, validation_polys_path, candidates_polys_path, current_polys_path]
+                          for index in range(len(candidates_polys))]
+            errors = pool.starmap(IncrementalBaseCreation.run_basis_validation, parameters)
+            print(f'Errors: {sorted(errors)}')
+            poly_index, error = min_arg_min(errors)
+            return candidates_polys[poly_index], error
 
     def create_base(self, prng: Random) -> PolyBase:
         polys = []
-        while len(polys) < self.base_size:
-            with TemporaryDirectory() as temp_dir:
-                validation_polys = list(generate(self.validation_polys, lambda: Poly.gen_random(self.variables, self.half_degree, prng).square().normalize()))
-                candidates_polys = list(generate(self.sample_polys, lambda: Poly.gen_random(self.variables, self.half_degree, prng).square().normalize()))
-                candidate_bases = [PolyBase(polys + [candidates_poly]) for candidates_poly in candidates_polys]
-                # arguments = list(product(candidate_bases, [validation_polys], [self.variables]))
-                #
-                # encode_json(candidate_bases, os.pathl)
-                # encode_json()
+        with multiprocessing.Pool(processes=self.number_of_processors) as pool:
+            while len(polys) < self.base_size:
+                validation_polys = Poly.gen_random_positive_polys(self.validation_polys, self.variables,
+                                                                  self.half_degree, prng)
+                candidates_polys = Poly.gen_random_positive_polys(self.sample_polys, self.variables,
+                                                                  self.half_degree, prng)
 
-                # encode_json(temp_dir, o)
-                # for i, candidate_base in enumerate(candidate_bases):
-                #     encode_json()
-                #     self.process_pool.apply_async(IncrementalBaseCreation.async_median_error,)
-                errors = [PolyBase.calc_median_error(candidate_base, validation_polys, self.variables)
-                          for candidate_base in candidate_bases]
-                best_poly = min_by(fst, zip(errors, candidates_polys), snd)
-
+                print(f'----- {len(polys)} -----')
+                best_poly, poly_error = IncrementalBaseCreation.async_best_poly(validation_polys, candidates_polys,
+                                                                                polys, pool)
+                print(f'Adding poly with average error {poly_error} to basis:')
+                print(best_poly)
                 polys.append(best_poly)
-                yield PolyBase(polys)
+        return PolyBase(polys)

@@ -1,5 +1,6 @@
 from typing import Callable, Iterable, List, Tuple
 
+from utils.core_utils import fst, id_func
 from utils.generic_utils import V, T, K
 
 
@@ -24,3 +25,7 @@ def filter_by(by: Callable[[T], V], predicate: Callable[[V], bool], items: Itera
 
 def min_by(by: Callable[[T], K], items: Iterable[T], map_func: Callable[[T], V]) -> V:
     return map_func(min(items, key=by))
+
+
+def min_arg_min(items: Iterable[T]) -> (int, T):
+    return min_by(fst, enumerate(items), id_func)

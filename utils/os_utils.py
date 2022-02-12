@@ -7,6 +7,11 @@ def write_text_file(path: str, content: str) -> None:
         file.write(content)
 
 
+def read_text_file(path: str) -> str:
+    with open(path, 'r') as file:
+        return file.read()
+
+
 def decode_json(path: str) -> Any:
     with open(path, 'w') as file:
         return json.load(file)

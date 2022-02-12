@@ -12,11 +12,16 @@ from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
 from utils.math_utils import combinations_sum
+from utils.os_utils import read_text_file
 
 
 @dataclass
 class PolyBase:
     polys: List[Poly]
+
+    @cached_property
+    def variables(self):
+        return list({variable for poly in self.polys for variable in poly.variables})
 
     @cached_property
     def degree(self):
@@ -50,7 +55,7 @@ class PolyBase:
         return result
 
     def calc_error(self, variables: List[str], max_deg: int, prng: Random) -> float:
-        poly = Poly.gen_random(variables, max_deg // 2, prng).square().normalize()
+        poly = Poly.gen_random_positive(variables, max_deg // 2, prng)
         return self.convex_approximation(variables, max_deg, poly)
 
     @staticmethod
@@ -72,5 +77,8 @@ class PolyBase:
         return '\n'.join((poly.encode_text() for poly in self.polys))
 
     @staticmethod
-    def decode_text(path: str) -> Poly:
-        raise NotImplementedError('Need to implement this')
+    def decode_text(path: str) -> PolyBase:
+        content = read_text_file(path)
+        lines = content.split('\n')
+        polys = list(map(Poly.decode_text, lines))
+        return PolyBase(polys)

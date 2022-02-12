@@ -39,6 +39,15 @@ class Monom:
             return f'{variable}^{deg}'
         return '*'.join(starmap(to_str, self.variable_to_deg.items()))
 
+    @staticmethod
+    def parse_monom(variables_to_degs: List[str]) -> Monom:
+        def parse_entry(entry: str) -> (str, int):
+            if '^' not in entry:
+                return entry, 1
+            variable, deg = entry.split('^')
+            return variable, int(deg)
+        return Monom(dict(map(parse_entry, variables_to_degs)))
+
     @cached_property
     def hash_value(self) -> int:
         return hash(tuple(sorted(self.variable_to_deg.items())))

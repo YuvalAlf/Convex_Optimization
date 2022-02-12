@@ -8,6 +8,8 @@ from utils.os_utils import write_text_file
 def run_base_creation(base_creation: BaseCreation, output_path: str, prng: Random) -> None:
     basis = base_creation.create_base(prng)
     write_text_file(output_path, basis.encode_text())
+    print('Basis is:')
+    print(basis.encode_text())
 
 
 def main() -> None:

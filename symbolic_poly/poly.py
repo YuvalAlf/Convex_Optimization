@@ -16,8 +16,12 @@ class Poly:
     monom_to_coeff: Dict[Monom, float]
 
     @cached_property
-    def degree(self):
+    def degree(self) -> int:
         return max((monom.degree for monom, coeff in self.monom_to_coeff.items() if coeff != 0.0))
+
+    @cached_property
+    def variables(self) -> List[str]:
+        return list({variable for monom in self.monom_to_coeff.keys() for variable in monom.variables})
 
     @staticmethod
     def zero() -> Poly:
@@ -75,3 +79,14 @@ class Poly:
 
     def encode_text(self):
         return self.__str__()
+
+    @staticmethod
+    def decode_text(line: str) -> Poly:
+        coeffs_and_monons = line.split(' + ')
+
+        def decode_coeff_monom(coef_and_monom_str: str) -> (Monom, float):
+            coeff, *variables_to_deg_str = coef_and_monom_str.split('*')
+            monom = Monom.parse_monom(variables_to_deg_str)
+            return monom, float(coeff)
+
+        return Poly(dict(map(decode_coeff_monom, coeffs_and_monons)))

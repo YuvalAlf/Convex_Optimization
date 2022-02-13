@@ -8,13 +8,13 @@ from functools import cached_property
 from random import Random
 from statistics import mean
 from tempfile import TemporaryDirectory
-from typing import List
+from typing import List, Optional
 
 from symbolic_poly.poly import Poly
 from symbolic_poly.poly_base import PolyBase
 from utils.input_utils import get_input
 from utils.iterable_utils import min_arg_min
-from utils.os_utils import encode_pickle, decode_pickle
+from utils.os_utils import encode_pickle, decode_pickle, write_text_file
 
 
 @dataclass
@@ -32,7 +32,7 @@ class BaseCreation(ABC):
         return [f'x{num}' for num in range(1, self.num_variables + 1)]
 
     @abstractmethod
-    def create_base(self, random: Random) -> PolyBase:
+    def create_base(self, random: Random, output_path: Optional[str] = None) -> PolyBase:
         pass
 
     @staticmethod
@@ -56,9 +56,12 @@ class BaseCreation(ABC):
 
 @dataclass
 class RandomBaseCreation(BaseCreation):
-    def create_base(self, prng: Random) -> PolyBase:
+    def create_base(self, prng: Random, output_path: Optional[str] = None) -> PolyBase:
         polys = [Poly.gen_random_positive(self.variables, self.half_degree, prng) for _ in range(self.base_size)]
-        return PolyBase(polys)
+        basis = PolyBase(polys)
+        if output_path is not None:
+            write_text_file(output_path, basis.encode_text())
+        return basis
 
 
 @dataclass
@@ -93,7 +96,7 @@ class IncrementalBaseCreation(BaseCreation):
             poly_index, error = min_arg_min(errors)
             return candidates_polys[poly_index], error
 
-    def create_base(self, prng: Random) -> PolyBase:
+    def create_base(self, prng: Random, output_path: Optional[str] = None) -> PolyBase:
         polys = []
         with multiprocessing.Pool(processes=self.number_of_processors) as pool:
             while len(polys) < self.base_size:
@@ -108,4 +111,5 @@ class IncrementalBaseCreation(BaseCreation):
                 print(f'Adding poly with average error {poly_error} to basis:')
                 print(best_poly)
                 polys.append(best_poly)
+                write_text_file(output_path, PolyBase(polys).encode_text())
         return PolyBase(polys)

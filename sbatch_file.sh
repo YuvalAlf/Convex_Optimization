@@ -13,4 +13,4 @@ source venv/bin/activate
 pip intall --upgrade pip
 pip install -r requirements.txt
 
-python run_numpy.py < input.txt > output.txt
+python gen_poly_basis.py < input.txt > output.txt

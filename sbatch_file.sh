@@ -10,7 +10,7 @@ module load Python/3.7.4-GCCcore-8.3.0
 
 python3 -m venv venv
 source venv/bin/activate
-pip intall --upgrade pip
+pip install --upgrade pip
 pip install -r requirements.txt
 
 python gen_poly_basis.py < input.txt > output.txt

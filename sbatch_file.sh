@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job_name=yuval_sos_poly
+#SBATCH --job-name=yuval_sos_poly
 #SBATCH --mail-user=yuvalalfassi@gmail.com
 #SBATCH --mail-type=ALL
 #SBATCH --cpus-per-task=20

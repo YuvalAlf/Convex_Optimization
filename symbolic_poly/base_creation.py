@@ -4,7 +4,6 @@ import multiprocessing
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import cached_property
 from random import Random
 from statistics import mean
 from tempfile import TemporaryDirectory
@@ -12,6 +11,7 @@ from typing import List, Optional
 
 from symbolic_poly.poly import Poly
 from symbolic_poly.poly_base import PolyBase
+from utils.functional_utils import cached_property
 from utils.input_utils import get_input
 from utils.iterable_utils import min_arg_min
 from utils.os_utils import encode_pickle, decode_pickle, write_text_file

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import cached_property
 from random import Random
-from statistics import median, mean
+from statistics import mean
 from typing import List, Optional
 
 import cvxpy as cp
@@ -11,6 +10,7 @@ import cvxpy as cp
 from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
+from utils.functional_utils import cached_property
 from utils.math_utils import combinations_sum
 from utils.os_utils import read_text_file
 

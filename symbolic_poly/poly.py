@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from functools import cached_property
 from itertools import chain
 from math import sqrt
 from random import Random
 from typing import List, Dict
 
 from symbolic_poly.monom import Monom
+from utils.functional_utils import cached_property
 from utils.iterable_utils import generate
 
 
-@dataclass(frozen=True)
+@dataclass
 class Poly:
     monom_to_coeff: Dict[Monom, float]
 

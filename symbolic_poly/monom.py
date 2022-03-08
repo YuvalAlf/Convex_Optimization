@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import cached_property
 from itertools import chain, starmap
 from typing import Dict, List, Iterable
 
-from functools import lru_cache
-
+from utils.functional_utils import cached_property
 from utils.math_utils import combinations_sum
 
 
-@dataclass(frozen=True)
+@dataclass
 class Monom:
     variable_to_deg: Dict[str, int]
 

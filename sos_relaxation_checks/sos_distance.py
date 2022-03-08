@@ -16,19 +16,21 @@ def prob1():
     poly = a*x**2 + b*y**2 + c*x*y + d*x + e*y + f
 
     problem = SOSProblem()
-    problem.add_sos_constraint(distance - gamma + poly*zero_set, [x, y])
+    sos_constants = problem.add_sos_constraint(distance - gamma + poly*zero_set, [x, y])
     problem.set_objective('max', problem.sym_to_var(gamma))
     problem.solve()
     print(problem.sym_to_var(gamma).value)
+    print(sum(sos_constants.get_sos_decomp()))
 
 
 def prob2():
     problem = poly_opt_prob([x, y], distance, [zero_set], None, 5, False)
 
-    solution = problem.solve()
+    solution = problem.solve(duals=True)
     print(problem.status)
     print(problem.value)
     print(problem.sp)
+    # print(solution.problem.dual.value)
 
 
 prob2()

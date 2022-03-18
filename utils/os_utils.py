@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 from typing import Any
 
@@ -32,3 +33,9 @@ def encode_pickle(path: str, obj: Any) -> str:
     with open(path, 'wb') as file:
         pickle.dump(obj, file)
         return path
+
+
+def join_create_dir(*paths: str) -> str:
+    joined_path = os.path.join(*paths)
+    os.makedirs(joined_path, exist_ok=True)
+    return joined_path

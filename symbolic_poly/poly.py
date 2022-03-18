@@ -16,6 +16,9 @@ from utils.iterable_utils import generate
 class Poly:
     monom_to_coeff: Dict[Monom, float]
 
+    def distance_to(self, other: Poly) -> float:
+        return sum(((self[monom] - other[monom])**2 for monom in set(chain(self.monoms, other.monoms))))
+
     @cached_property
     def degree(self) -> int:
         return max((monom.degree for monom, coeff in self.monom_to_coeff.items() if coeff != 0.0))

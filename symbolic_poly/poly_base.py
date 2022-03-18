@@ -34,12 +34,12 @@ class PolyBase:
     def normalize_square(self) -> PolyBase:
         return PolyBase([poly.square().normalize() for poly in self.polys])
 
-    def convex_approximation(self, variables: List[str], max_deg: int, poly: Poly) -> float:
+    def convex_approximation(self, poly: Poly) -> float:
         linear_multipliers = cp.Variable(len(self.polys))
         constraints = [multiplier >= 0 for multiplier in linear_multipliers]
 
-        monoms = [Monom.create(dict(zip(variables, exponents))) for deg in range(max_deg + 1)
-                  for exponents in combinations_sum(number_of_values=len(variables), desired_sum=deg)]
+        monoms = [Monom.create(dict(zip(self.variables, exponents))) for deg in range(self.degree + 1)
+                  for exponents in combinations_sum(number_of_values=len(self.variables), desired_sum=deg)]
 
         sum_squares_error = cp.Constant(0.0)
 
@@ -55,11 +55,11 @@ class PolyBase:
 
     def calc_error(self, variables: List[str], max_deg: int, prng: Random) -> float:
         poly = Poly.gen_random_positive(variables, max_deg // 2, prng)
-        return self.convex_approximation(variables, max_deg, poly)
+        return self.convex_approximation(poly)
 
     @staticmethod
-    def calc_average_error(poly_base: PolyBase, validation_polys: List[Poly], variables: List[str]) -> float:
-        errors = [poly_base.convex_approximation(variables, poly_base.degree, poly) for poly in validation_polys]
+    def calc_average_error(poly_base: PolyBase, validation_polys: List[Poly]) -> float:
+        errors = [poly_base.convex_approximation(poly) for poly in validation_polys]
         return mean(errors)
 
     @staticmethod
@@ -70,7 +70,7 @@ class PolyBase:
         polys_in_sum = [Poly.gen_random(variables, half_deg, prng).square().normalize() for _ in range(sum_polys)]
         sum_poly = sum(polys_in_sum, Poly.zero()).normalize()
         poly_basis = PolyBase.gen_random(variables, half_deg, base_polys, prng).normalize_square()
-        return poly_basis.convex_approximation(variables, max_deg, sum_poly)
+        return poly_basis.convex_approximation(sum_poly)
 
     def encode_text(self) -> str:
         return '\n'.join((poly.encode_text() for poly in self.polys))
@@ -81,3 +81,9 @@ class PolyBase:
         lines = content.split('\n')
         polys = list(map(Poly.decode_text, lines))
         return PolyBase(polys)
+
+    def add_poly(self, poly: Poly) -> PolyBase:
+        return PolyBase(self.polys + [poly])
+
+    def min_distance_to(self, poly: Poly) -> float:
+        return min(base_poly.distance_to(poly) for base_poly in self.polys)

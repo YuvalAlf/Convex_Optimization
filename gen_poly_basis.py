@@ -1,23 +1,25 @@
-from random import Random
+from argparse import Namespace
 
 from symbolic_poly.base_creation import BaseCreation
-from utils.input_utils import get_input
-from utils.os_utils import write_text_file
+from utils.argparser_wrapper import ArgParserWrapper
+from utils.random_utils import set_seed
 
 
-def run_base_creation(base_creation: BaseCreation, output_path: str, prng: Random) -> None:
-    basis = base_creation.create_base(prng, output_path=output_path)
-    write_text_file(output_path, basis.encode_text())
+def get_input_args() -> Namespace:
+    return ArgParserWrapper("Generate sos poly basis")\
+        .add_arg('random_seed', int)\
+        .add_arg('output_directory', str)\
+        .parse_args()
+
+
+def run_base_creation(random_seed: int, output_directory: str) -> None:
+    prng = set_seed(random_seed)
+    base_creation = BaseCreation.get_base_creation_from_user()
+    result_directory = base_creation.create_directory(output_directory, random_seed)
+    basis = base_creation.create(result_directory, prng)
     print('Basis is:')
     print(basis.encode_text())
 
 
-def main() -> None:
-    prng = Random(get_input('Enter random seed', int, 0))
-    output_path = get_input('Enter output basis path', str, 'basis.txt')
-    base_creation = BaseCreation.get_base_creation_from_user()
-    run_base_creation(base_creation, output_path, prng)
-
-
 if __name__ == '__main__':
-    main()
+    run_base_creation(get_input_args())

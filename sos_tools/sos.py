@@ -1,13 +1,11 @@
 import math
-import picos as pic
-import sympy as sp
-import numpy as np
-from picos import Problem
-from collections import defaultdict
 from operator import floordiv, and_
 
-from .util import *
+import picos as pic
+from picos import Problem
+
 from .basis import Basis, poly_variable
+from .util import *
 
 
 class SOSProblem(Problem):

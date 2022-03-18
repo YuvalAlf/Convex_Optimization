@@ -92,7 +92,7 @@ class IncrementalBaseCreation(BaseCreation):
             parameters = [[index, validation_polys_path, candidates_polys_path, current_polys_path]
                           for index in range(len(candidates_polys))]
             errors = pool.starmap(IncrementalBaseCreation.run_basis_validation, parameters)
-            print(f'Errors: {sorted(errors)}')
+            print(f'Errors: {mean(errors)}')
             poly_index, error = min_arg_min(errors)
             return candidates_polys[poly_index], error
 

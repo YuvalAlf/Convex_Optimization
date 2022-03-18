@@ -1,10 +1,10 @@
-import sympy as sp
-import numpy as np
 import math
 from collections import defaultdict
+
 from scipy.spatial import ConvexHull
 
 from .util import *
+
 
 def basis_hom(n, d):
     '''Generator for a homogeneous polynomial basis for n variables of degree d,

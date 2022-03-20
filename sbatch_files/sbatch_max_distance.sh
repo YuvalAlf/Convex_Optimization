@@ -12,4 +12,4 @@ source ../venv/bin/activate
 pip3 install --upgrade pip
 pip3 install -r ../requirements.txt
 
-python3 gen_poly_basis.py $(($i)) ../results < input_max_distance.txt
+python3 ../gen_poly_basis.py $(($i)) ../results < input_max_distance.txt

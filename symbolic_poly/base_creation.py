@@ -60,16 +60,16 @@ class BaseCreation(ABC):
         num_variables = get_input('Enter number of variables', int, 2)
         degree = get_input('Enter basis degree', int, 4)
         tests = get_input('Enter number of tests for quality measure', int, 100)
-        mode = get_input('Enter R for random basis and I for incremental basis, F for farthest basis and A '
-                         'for best approximated basis', str, 'R')
+        mode = get_input('Enter R for random basis and B for best basis, F for farthest basis and W '
+                         'for worst approximated basis', str, 'R')
         if mode == 'R':
             return RandomBaseCreation(basis_size, num_variables, degree, tests)
         num_candidates = get_input('Enter number of candidate polynomials', int, 10)
         if mode == 'F':
             return FarthestBaseCreation(basis_size, num_variables, degree, tests, num_candidates)
-        if mode == 'A':
-            return BestApproximationBaseCreation(basis_size, num_variables, degree, tests, num_candidates)
-        if mode == 'I':
+        if mode == 'W':
+            return WorstApproximationBaseCreation(basis_size, num_variables, degree, tests, num_candidates)
+        if mode == 'B':
             num_validations = get_input('Enter number of validation polynomials', int, 10)
             return BestBasisBaseCreation(basis_size, num_variables, degree, tests, num_candidates, num_validations)
         raise ValueError(f'Mode {mode} not valid')
@@ -135,7 +135,7 @@ class FarthestBaseCreation(IncrementalBaseCreation):
 
 
 @dataclass
-class BestApproximationBaseCreation(IncrementalBaseCreation):
+class WorstApproximationBaseCreation(IncrementalBaseCreation):
 
     def measure_file_name(self) -> str:
         return 'best_approximations.txt'

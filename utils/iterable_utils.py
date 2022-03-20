@@ -23,13 +23,9 @@ def filter_by(by: Callable[[T], V], predicate: Callable[[V], bool], items: Itera
             yield item
 
 
-def min_by(by: Callable[[T], K], items: Iterable[T], map_func: Callable[[T], V] = id_func) -> V:
-    return map_func(min(items, key=by))
+def min_by(by: Callable[[T], K], items: Iterable[T]) -> (K, V):
+    return min(((by(item), item) for item in items), key=fst)
 
 
-def max_by(by: Callable[[T], K], items: Iterable[T], map_func: Callable[[T], V] = id_func) -> V:
-    return map_func(max(items, key=by))
-
-
-def min_arg_min(items: Iterable[T]) -> (int, T):
-    return min_by(fst, enumerate(items), id_func)
+def max_by(by: Callable[[T], K], items: Iterable[T]) -> (K, V):
+    return max(((by(item), item) for item in items), key=fst)

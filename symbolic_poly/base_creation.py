@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from random import Random
-from statistics import mean
-from tempfile import TemporaryDirectory
-from typing import List, Optional
+from typing import List, Optional, Iterable
 
 from symbolic_poly.poly import Poly
 from symbolic_poly.poly_base import PolyBase
-from utils.functional_utils import cached_property
 from utils.input_utils import get_input
-from utils.iterable_utils import min_arg_min, generate, min_by, max_by
-from utils.os_utils import encode_pickle, decode_pickle, write_text_file, join_create_dir
+from utils.iterable_utils import max_by, min_by
+from utils.metaprogramming_utils import cached_property
+from utils.os_utils import join_create_dir, append_line_text_file
 
 
 @dataclass
@@ -22,6 +19,7 @@ class BaseCreation(ABC):
     base_size: int
     num_variables: int
     degree: int
+    tests: int
 
     @cached_property
     def half_degree(self) -> int:
@@ -31,134 +29,144 @@ class BaseCreation(ABC):
     def variables(self) -> List[str]:
         return [f'x{num}' for num in range(1, self.num_variables + 1)]
 
+    def create_basis(self, prng: Random, output_directory: Optional[str] = None) -> PolyBase:
+        poly_basis = PolyBase([])
+        for poly in self.create_basis_one_by_one(prng, output_directory):
+            poly_basis = poly_basis.add_poly(poly)
+            if output_directory is not None:
+                append_line_text_file(os.path.join(output_directory, 'basis.txt'), poly.encode_text())
+                quality = poly_basis.measure_quality(self.tests, prng)
+                append_line_text_file(self.quality_measure_csv_path(output_directory), f'{len(poly_basis)},{quality}')
+
+        return poly_basis
+
     @abstractmethod
-    def create_base(self, prng: Random, output_directory: Optional[str] = None) -> PolyBase:
+    def create_basis_one_by_one(self, prng: Random, output_directory: Optional[str] = None) -> Iterable[Poly]:
         pass
+
+    @abstractmethod
+    def create_directory(self, output_directory: str, random_seed: int) -> str:
+        pass
+
+    def quality_measure_csv_path(self, directory: str) -> str:
+        csv_path = os.path.join(directory, 'quality.csv')
+        if not os.path.exists(csv_path):
+            append_line_text_file(csv_path, 'Basis Size,Average Error')
+        return csv_path
 
     @staticmethod
     def get_base_creation_from_user() -> BaseCreation:
         basis_size = get_input('Enter basis size', int, 10)
         num_variables = get_input('Enter number of variables', int, 2)
         degree = get_input('Enter basis degree', int, 4)
-        mode = get_input('Enter R for random basis and I for incremental basis, F for farthest basis and A'
+        tests = get_input('Enter number of tests for quality measure', int, 100)
+        mode = get_input('Enter R for random basis and I for incremental basis, F for farthest basis and A '
                          'for best approximated basis', str, 'R')
         if mode == 'R':
-            return RandomBaseCreation(basis_size, num_variables, degree)
+            return RandomBaseCreation(basis_size, num_variables, degree, tests)
+        num_candidates = get_input('Enter number of candidate polynomials', int, 10)
         if mode == 'F':
-            candidates = get_input('Enter number of candidate polynomials', int, 10)
-            return FarthestBaseCreation(basis_size, num_variables, degree, candidates)
+            return FarthestBaseCreation(basis_size, num_variables, degree, tests, num_candidates)
         if mode == 'A':
-            candidates = get_input('Enter number of candidate polynomials', int, 10)
-            return BestApproximationBaseCreation(basis_size, num_variables, degree, candidates)
+            return BestApproximationBaseCreation(basis_size, num_variables, degree, tests, num_candidates)
         if mode == 'I':
-            candidates = get_input('Enter number of candidate polynomials', int, 10)
-            validations = get_input('Enter number of validation polynomials', int, 10)
-            processors = get_input('Enter number of processors to use', int, 5)
-            return IncrementalBaseCreation(basis_size, num_variables, degree, validations, candidates, processors)
+            num_validations = get_input('Enter number of validation polynomials', int, 10)
+            return BestBasisBaseCreation(basis_size, num_variables, degree, tests, num_candidates, num_validations)
         raise ValueError(f'Mode {mode} not valid')
 
 
 @dataclass
 class RandomBaseCreation(BaseCreation):
     def create_directory(self, output_directory: str, random_seed: int) -> str:
-        return join_create_dir(output_directory, f'random-basis_seed={random_seed}')
+        return join_create_dir(output_directory, f'random-basis_seed={random_seed}', override=True)
 
-    def create_base(self, prng: Random, output_directory: Optional[str] = None) -> PolyBase:
-        polys = [Poly.gen_random_positive(self.variables, self.half_degree, prng) for _ in range(self.base_size)]
-        basis = PolyBase(polys)
-        if output_directory is not None:
-            write_text_file(os.path.join(output_directory, 'basis.txt'), basis.encode_text())
-        return basis
-
-
-@dataclass
-class FarthestBaseCreation(BaseCreation):
-    num_candidates: int
-
-    def create_directory(self, output_directory: str, random_seed: int) -> str:
-        return join_create_dir(output_directory, f'farthest-basis_candidates={self.num_candidates}_seed={random_seed}')
-
-    def create_base(self, prng: Random, output_directory: Optional[str] = None) -> PolyBase:
-        basis = PolyBase([Poly.gen_random_positive(self.variables, self.half_degree, prng)])
-        while len(basis.polys) < self.base_size:
-            candidates_polys = generate(self.num_candidates,
-                                        lambda: Poly.gen_random_positive(self.variables, self.half_degree, prng))
-            best_poly = max_by(basis.min_distance_to, candidates_polys)
-            basis = basis.add_poly(best_poly)
-        if output_directory is not None:
-            write_text_file(os.path.join(output_directory, 'basis.txt'), basis.encode_text())
-        return basis
-
-
-@dataclass
-class BestApproximationBaseCreation(BaseCreation):
-    num_candidates: int
-
-    def create_directory(self, output_directory: str, random_seed: int) -> str:
-        return join_create_dir(output_directory, f'best-approx_candidates={self.num_candidates}_seed={random_seed}')
-
-    def create_base(self, prng: Random, output_directory: Optional[str] = None) -> PolyBase:
-        basis = PolyBase([Poly.gen_random_positive(self.variables, self.half_degree, prng)])
-        while len(basis.polys) < self.base_size:
-            candidates_polys = generate(self.num_candidates,
-                                        lambda:Poly.gen_random_positive(self.variables, self.half_degree, prng))
-            best_poly = min_by(basis.convex_approximation, candidates_polys)
-            basis = basis.add_poly(best_poly)
-        if output_directory is not None:
-            write_text_file(os.path.join(output_directory, 'basis.txt'), basis.encode_text())
-        return basis
+    def create_basis_one_by_one(self, prng: Random, output_directory: Optional[str] = None) -> Iterable[Poly]:
+        for _ in range(self.base_size):
+            yield Poly.gen_random_positive(self.variables, self.half_degree, prng)
 
 
 @dataclass
 class IncrementalBaseCreation(BaseCreation):
-    validation_polys: int
-    candidate_polys: int
-    number_of_processors: int
+    num_candidates: int
+
+    @abstractmethod
+    def measure_file_name(self) -> str:
+        pass
+
+    @abstractmethod
+    def choose_best(self, basis: PolyBase, candidates: List[Poly], prng: Random) -> (float, Poly):
+        pass
+
+    @abstractmethod
+    def initial_basis(self, prng: Random) -> PolyBase:
+        pass
+
+    def create_basis_one_by_one(self, prng: Random, output_directory: Optional[str] = None) -> Iterable[Poly]:
+        basis = self.initial_basis(prng)
+        yield from basis.polys
+
+        while len(basis.polys) < self.base_size:
+            candidates = Poly.gen_random_positive_polys(self.num_candidates, self.variables, self.half_degree, prng)
+            measure, best_poly = self.choose_best(basis, candidates, prng)
+            basis = basis.add_poly(best_poly)
+            yield best_poly
+            if output_directory is not None:
+                append_line_text_file(os.path.join(output_directory, self.measure_file_name()),
+                                      f'|Basis| = {len(basis)} --> {measure}')
+
+        return basis
+
+
+@dataclass
+class FarthestBaseCreation(IncrementalBaseCreation):
+
+    def measure_file_name(self) -> str:
+        return 'distances.txt'
+
+    def choose_best(self, basis: PolyBase, candidates: List[Poly], prng: Random) -> (float, Poly):
+        return max_by(basis.min_distance_to, candidates)
+
+    def initial_basis(self, prng: Random) -> PolyBase:
+        return PolyBase([Poly.gen_random_positive(self.variables, self.half_degree, prng)])
 
     def create_directory(self, output_directory: str, random_seed: int) -> str:
-        return join_create_dir(output_directory, f'incremental-basis_candidates={self.candidate_polys}'
-                                                 f'_validations={self.validation_polys}_seed={random_seed}')
+        return join_create_dir(output_directory, f'farthest-basis_candidates={self.num_candidates}_seed={random_seed}',
+                               override=True)
 
-    @staticmethod
-    def run_basis_validation(candidate_index: int, validation_polys_path: str, candidates_polys_path: str,
-                             current_polys_path: str) -> float:
-        validation_polys = decode_pickle(validation_polys_path)
-        candidates_polys = decode_pickle(candidates_polys_path)
-        current_polys = decode_pickle(current_polys_path)
-        candidate_poly = candidates_polys[candidate_index]
-        candidate_basis = PolyBase(current_polys + [candidate_poly])
-        errors = [candidate_basis.convex_approximation(validation_poly) for validation_poly in validation_polys]
-        return mean(errors)
 
-    @staticmethod
-    def async_best_poly(validation_polys: List[Poly], candidates_polys: List[Poly], current_polys: List[Poly],
-                        pool: multiprocessing.Pool) -> (Poly, float):
-        with TemporaryDirectory() as temp_dir:
-            validation_polys_path = encode_pickle(os.path.join(temp_dir, 'validation_polys.pickle'), validation_polys)
-            candidates_polys_path = encode_pickle(os.path.join(temp_dir, 'candidates_polys.pickle'), candidates_polys)
-            current_polys_path = encode_pickle(os.path.join(temp_dir, 'current_polys.pickle'), current_polys)
-            parameters = [[index, validation_polys_path, candidates_polys_path, current_polys_path]
-                          for index in range(len(candidates_polys))]
-            errors = pool.starmap(IncrementalBaseCreation.run_basis_validation, parameters)
-            print(f'Errors: {mean(errors)}')
-            poly_index, error = min_arg_min(errors)
-            return candidates_polys[poly_index], error
+@dataclass
+class BestApproximationBaseCreation(IncrementalBaseCreation):
 
-    def create_base(self, prng: Random, output_path: Optional[str] = None) -> PolyBase:
-        raise NotImplementedError()
-        polys = []
-        with multiprocessing.Pool(processes=self.number_of_processors) as pool:
-            while len(polys) < self.base_size:
-                validation_polys = Poly.gen_random_positive_polys(self.validation_polys, self.variables,
-                                                                  self.half_degree, prng)
-                candidates_polys = Poly.gen_random_positive_polys(self.sample_polys, self.variables,
-                                                                  self.half_degree, prng)
+    def measure_file_name(self) -> str:
+        return 'best_approximations.txt'
 
-                print(f'----- {len(polys)} -----')
-                best_poly, poly_error = IncrementalBaseCreation.async_best_poly(validation_polys, candidates_polys,
-                                                                                polys, pool)
-                print(f'Adding poly with average error {poly_error} to basis:')
-                print(best_poly)
-                polys.append(best_poly)
-                write_text_file(output_path, PolyBase(polys).encode_text())
-        return PolyBase(polys)
+    def choose_best(self, basis: PolyBase, candidates: List[Poly], prng: Random) -> (float, Poly):
+        return max_by(basis.convex_approximation, candidates)
+
+    def initial_basis(self, prng: Random) -> PolyBase:
+        return PolyBase([Poly.gen_random_positive(self.variables, self.half_degree, prng)])
+
+    def create_directory(self, output_directory: str, random_seed: int) -> str:
+        return join_create_dir(output_directory, f'best-approx_candidates={self.num_candidates}_seed={random_seed}',
+                               override=True)
+
+
+@dataclass
+class BestBasisBaseCreation(IncrementalBaseCreation):
+    num_validations: int
+
+    def measure_file_name(self) -> str:
+        return 'basis_approximation.txt'
+
+    def choose_best(self, basis: PolyBase, candidates: List[Poly], prng: Random) -> (float, Poly):
+        validation_polys = Poly.gen_random_positive_polys(self.num_validations, self.variables, self.half_degree, prng)
+        return min_by(lambda poly: basis.add_poly(poly).calc_average_error(validation_polys), candidates)
+
+    def initial_basis(self, prng: Random) -> PolyBase:
+        return PolyBase([])
+
+    def create_directory(self, output_directory: str, random_seed: int) -> str:
+        return join_create_dir(output_directory, f'best-basis_candidates={self.num_candidates}'
+                                                 f'_validations={self.num_validations}_seed={random_seed}',
+                               override=True)
+

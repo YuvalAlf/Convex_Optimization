@@ -10,7 +10,7 @@ import cvxpy as cp
 from symbolic_poly.monom import Monom
 from symbolic_poly.poly import Poly
 from utils.cvxpy_utils import cvxpy_sum_product
-from utils.functional_utils import cached_property
+from utils.metaprogramming_utils import cached_property
 from utils.math_utils import combinations_sum
 from utils.os_utils import read_text_file
 
@@ -18,6 +18,9 @@ from utils.os_utils import read_text_file
 @dataclass
 class PolyBase:
     polys: List[Poly]
+
+    def __len__(self) -> int:
+        return len(self.polys)
 
     @cached_property
     def variables(self):
@@ -57,9 +60,8 @@ class PolyBase:
         poly = Poly.gen_random_positive(variables, max_deg // 2, prng)
         return self.convex_approximation(poly)
 
-    @staticmethod
-    def calc_average_error(poly_base: PolyBase, validation_polys: List[Poly]) -> float:
-        errors = [poly_base.convex_approximation(poly) for poly in validation_polys]
+    def calc_average_error(self, validation_polys: List[Poly]) -> float:
+        errors = [self.convex_approximation(poly) for poly in validation_polys]
         return mean(errors)
 
     @staticmethod
@@ -87,3 +89,7 @@ class PolyBase:
 
     def min_distance_to(self, poly: Poly) -> float:
         return min(base_poly.distance_to(poly) for base_poly in self.polys)
+
+    def measure_quality(self, num_tests: int, prng: Random) -> float:
+        test_polys = Poly.gen_random_positive_polys(num_tests, self.variables, self.degree // 2, prng)
+        return mean((self.convex_approximation(test_poly) for test_poly in test_polys))

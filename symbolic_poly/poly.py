@@ -8,16 +8,13 @@ from random import Random
 from typing import List, Dict
 
 from symbolic_poly.monom import Monom
-from utils.functional_utils import cached_property
+from utils.metaprogramming_utils import cached_property
 from utils.iterable_utils import generate
 
 
 @dataclass
 class Poly:
     monom_to_coeff: Dict[Monom, float]
-
-    def distance_to(self, other: Poly) -> float:
-        return sum(((self[monom] - other[monom])**2 for monom in set(chain(self.monoms, other.monoms))))
 
     @cached_property
     def degree(self) -> int:
@@ -45,7 +42,7 @@ class Poly:
         return Poly({monom: -coeff for monom, coeff in self.monom_to_coeff.items()})
 
     def __sub__(self, other: Poly) -> Poly:
-        return self.__add__(other.__neg__())
+        return Poly({monom: self[monom] - other[monom] for monom in set(chain(self.monoms, other.monoms))})
 
     def __mul__(self, other: Poly) -> Poly:
         monoms_to_coeffs = defaultdict(float)
@@ -63,7 +60,7 @@ class Poly:
         return ' + '.join((f'{self[monom]:.5f}{mul_monom_str(monom)}' for monom in monoms_sorted))
 
     def normalize(self) -> Poly:
-        normalization_factor = sqrt(sum((coeff ** 2 for coeff in self.monom_to_coeff.values())))
+        normalization_factor = sqrt(sum(coeff ** 2 for coeff in self.monom_to_coeff.values()))
         return Poly({monom: coeff / normalization_factor for monom, coeff in self.monom_to_coeff.items()})
 
     def square(self) -> Poly:
@@ -84,6 +81,9 @@ class Poly:
     @staticmethod
     def gen_random_positive_polys(num_polys: int, variables: List[str], half_degree: int, prng: Random) -> List[Poly]:
         return list(generate(num_polys, lambda: Poly.gen_random_positive(variables, half_degree, prng)))
+
+    def distance_to(self, other: Poly) -> float:
+        return sqrt(sum((self[monom] - other[monom])**2 for monom in set(chain(self.monoms, other.monoms))))
 
     def encode_text(self):
         return self.__str__()

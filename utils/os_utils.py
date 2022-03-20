@@ -1,12 +1,19 @@
 import json
 import os
 import pickle
+import shutil
 from typing import Any
 
 
 def write_text_file(path: str, content: str) -> None:
     with open(path, 'w') as file:
         file.write(content)
+
+
+def append_line_text_file(path: str, content: Any) -> None:
+    with open(path, 'a') as file:
+        file.write(f'{content}\n')
+        file.flush()
 
 
 def read_text_file(path: str) -> str:
@@ -35,7 +42,9 @@ def encode_pickle(path: str, obj: Any) -> str:
         return path
 
 
-def join_create_dir(*paths: str) -> str:
+def join_create_dir(*paths: str, override: bool = False) -> str:
     joined_path = os.path.join(*paths)
+    if os.path.exists(joined_path) and override:
+        shutil.rmtree(joined_path)
     os.makedirs(joined_path, exist_ok=True)
     return joined_path

@@ -4,8 +4,6 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 
-from utils.iterable_utils import map_list
-
 
 @dataclass
 class Plot:

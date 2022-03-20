@@ -3,6 +3,7 @@
 #SBATCH --job-name=yuval_sos_poly
 #SBATCH --mail-user=yuvalalfassi@gmail.com
 #SBATCH --array=0-9
+i=${SLURM_ARRAY_TASK_ID}
 
 module load Python/3.7.4-GCCcore-8.3.0
 module load CMake/3.20.1-GCCcore-10.3.0

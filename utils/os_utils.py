@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 import shutil
-from typing import Any
+from typing import Any, Iterable, Tuple
 
 
 def write_text_file(path: str, content: str) -> None:
@@ -48,3 +48,10 @@ def join_create_dir(*paths: str, override: bool = False) -> str:
         shutil.rmtree(joined_path)
     os.makedirs(joined_path, exist_ok=True)
     return joined_path
+
+
+def iterate_inner_directories(base_directory: str) -> Iterable[Tuple[str, str]]:
+    for dir_name in os.listdir(base_directory):
+        dir_path = os.path.join(base_directory, dir_name)
+        if os.path.isdir(dir_path):
+            yield dir_name, dir_path
